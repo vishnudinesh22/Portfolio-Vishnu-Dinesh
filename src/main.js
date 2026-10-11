@@ -1,6 +1,8 @@
-import { dialogueData, scaleFactor } from "./constants";
+import { scaleFactor } from "./constants";
 import { k } from "./kaboomCtx";
-import { displayDialogue, setCamScale } from "./utils";
+import { setCamScale } from "./utils";
+import { setupStory } from "./story";
+import "./style.css";
 
 k.loadSprite("spritesheet", "./spritesheet.png", {
   sliceX: 39,
@@ -16,6 +18,11 @@ k.loadSprite("spritesheet", "./spritesheet.png", {
 });
 
 k.loadSprite("map", "./map.png");
+k.loadFont("Bungee", "./fonts/Bungee-Regular.ttf");
+k.loadFont("Nunito", "./fonts/Nunito-Variable.ttf");
+for (const name of ["football", "bicycle", "laptop", "prototype"]) {
+  k.loadSprite(name, `./${name}.svg`);
+}
 
 k.setBackground(k.Color.fromHex("#311047"));
 
@@ -47,22 +54,13 @@ k.scene("main", async () => {
       for (const boundary of layer.objects) {
         map.add([
           k.area({
-            shape: new k.Rect(k.vec2(0), boundary.width, boundary.height),
+            shape: new k.Rect(k.vec2(0), Math.max(1, boundary.width), Math.max(1, boundary.height)),
           }),
           k.body({ isStatic: true }),
           k.pos(boundary.x, boundary.y),
           boundary.name,
         ]);
 
-        if (boundary.name) {
-          player.onCollide(boundary.name, () => {
-            player.isInDialogue = true;
-            displayDialogue(
-              dialogueData[boundary.name],
-              () => (player.isInDialogue = false)
-            );
-          });
-        }
       }
 
       continue;
@@ -82,6 +80,7 @@ k.scene("main", async () => {
     }
   }
 
+  const story = setupStory(k, map, player, mapData);
   setCamScale(k);
 
   k.onResize(() => {
@@ -89,7 +88,9 @@ k.scene("main", async () => {
   });
 
   k.onUpdate(() => {
-    k.camPos(player.worldPos().x, player.worldPos().y - 100);
+    // The player is a root object; follow world coordinates without camera feedback.
+    const attention = story.cameraAttention();
+    k.camPos(player.pos.x + attention.x, player.pos.y - 100 + attention.y);
   });
 
   k.onMouseDown((mouseBtn) => {

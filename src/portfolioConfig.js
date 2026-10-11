@@ -1,0 +1,31 @@
+// Replace the name and URLs here; no game logic changes are needed.
+export const portfolioConfig = {
+  name: "Vishnu",
+  degree: "Bachelor of Design (B.Des) — Industrial Design",
+  institution: "VIT Vellore",
+  introduction: "Welcome to my world! I'm an Industrial Design student at VIT Vellore. My work spans Industrial Design, Product Design, and UI/UX Design. Take a short walk through my space to get to know me.",
+  couchDialogue: "My couch is probably my favourite place. Most days, you'll find me working on something while watching a series in the background.",
+  footballDialogue: "When I'm not designing, I enjoy playing football. It's one of my favourite ways to switch off.",
+  cyclingDialogue: "Cycling is another thing I enjoy. Sometimes the best ideas come when I'm away from my screen.",
+  uiuxPortfolioUrl: "https://example.com/uiux",
+  industrialDesignPortfolioUrl: "https://example.com/industrial-design",
+  experienceTitle: "A Day in Vishnu's World",
+  objectNames: { football: "FOOTBALL", cycling: "ROCKY", couch: "BLENDY", tv: "PORTAL", degree: "MY DESIGN JOURNEY", uiux: "UI/UX DESIGN", industrial: "INDUSTRIAL DESIGN" },
+  story: {
+    opening: ["It's 4 PM! I feel like going cycling.", "But first, I need my football. Might play a little later!"],
+    football: ["Got it! Now where's Rocky?"],
+    cycling: ["Rocky and I are off! See you in a bit.", "6 PM already? I'm exhausted. Time to relax!"],
+    couch: ["Ah, Blendy. My favourite place to work and relax.", "But first, I need something good to watch!"],
+    tv: ["Welcome to Portal. Where one episode somehow becomes five.", "I love working on my designs while watching series and movies."],
+    degree: ["Certified Design Thinker via VIT's B.Des program.", "That's a little about me. Now it's time to show you what I can do!", "So, what would you like to explore?"],
+    certificateNote: "A personal way of describing my design journey.",
+    quests: [
+      { id: "football", title: "Football first", objective: "Find the football", action: "Collect football", location: "Beside the left-room rug" },
+      { id: "cycling", title: "Meet Rocky", objective: "Find Rocky", action: "Meet Rocky", location: "Bicycle in the connecting passage" },
+      { id: "couch", title: "6 PM: Blendy", objective: "Find Blendy", action: "Relax on Blendy", location: "Couch in the left room" },
+      { id: "tv", title: "Portal", objective: "Find Portal", action: "Tune in to Portal", location: "Television below the couch" },
+      { id: "degree", title: "My design journey", objective: "Find my design certificate", action: "Read my design journey", location: "Left-room wall · walk around the couch's right side" },
+      { id: "adventure", title: "Choose your design adventure", objective: "Choose your design adventure", location: "Both workstations are in the right room" },
+    ],
+  },
+};

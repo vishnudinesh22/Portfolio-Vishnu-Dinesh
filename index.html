@@ -1,92 +1,58 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <style>
-      @font-face {
-        font-family: monogram;
-        src: url(monogram.ttf);
-      }
-
-      body {
-        font-family: monogram, monospace;
-        font-size: 2rem;
-        overflow: hidden;
-      }
-
-      #app {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
-
-      #textbox {
-        position: absolute;
-        left: 10%;
-        right: 10%;
-        bottom: 2vh;
-        min-height: 10vh;
-        background: white;
-        border-radius: 3px;
-        outline-style: solid;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        align-items: flex-start;
-        word-spacing: 0.2rem;
-        filter: drop-shadow(0 0 0.75rem rgb(112, 112, 112));
-        /* overflow: auto; */
-      }
-
-      .ui-text {
-        margin: 0;
-        user-select: none;
-      }
-
-      .ui-close-btn {
-        font-family: monogram, monospace;
-        border-style: none;
-        border-radius: 3px;
-        padding: 1rem;
-        font-size: inherit;
-      }
-
-      .btn-container {
-        align-self: flex-end;
-        margin-top: 1rem;
-      }
-
-      .note {
-        position: absolute;
-        left: 5%;
-        top: 1vh;
-        display: flex;
-        flex-direction: column;
-        color: rgb(238, 238, 238);
-      }
-    </style>
-    <div id="app">
-      <div>
-        <p class="note">Tap/Click around to move</p>
-
-        <div id="textbox-container" style="display: none">
-          <div id="textbox">
-            <p id="dialogue" class="ui-text"></p>
-            <div class="btn-container">
-              <button id="close" class="ui-close-btn">Close</button>
-            </div>
-          </div>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A Day in Vishnu's World: an interactive evening of football, cycling, personal stories, Industrial Design, and UI/UX." />
+  <link rel="preload" href="/fonts/Bungee-Regular.ttf" as="font" type="font/ttf" crossorigin />
+  <link rel="preload" href="/fonts/Nunito-Variable.ttf" as="font" type="font/ttf" crossorigin />
+  <title>A Day in Vishnu's World</title>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="A Day in Vishnu's World. Arrow keys or hold click or touch to move. Press E or tap a nearby prompt to interact. Use Skip to Portfolio for an accessible alternative." tabindex="0"></canvas>
+    <nav id="global-controls" class="global-controls" aria-label="Game controls">
+      <button id="sound-toggle" aria-pressed="true">Sound on</button>
+      <button id="quick-access" aria-expanded="false" aria-controls="accessible-view">Skip to Portfolio</button>
+    </nav>
+    <aside id="quest-tracker" class="quest-tracker" aria-label="Quest tracker">
+      <header><strong id="identity">A Day in Vishnu's World</strong><button id="collapse-quest" aria-expanded="true" aria-controls="quest-body" aria-label="Collapse quest tracker">−</button></header>
+      <div id="collapsed-status"><span aria-hidden="true">◆</span><p id="quest-compact" hidden></p><span id="compact-progress"></span></div>
+      <div id="quest-body">
+        <div class="quest-meta"><span id="quest-number">Quest 1 of 6</span><span id="story-clock">4 PM</span></div>
+        <h2 id="quest-title">Football first</h2>
+        <p id="quest-objective" aria-live="polite">Find the football</p>
+        <p id="quest-location" hidden></p>
+        <div class="journey"><progress id="story-progress" max="6" value="0" aria-labelledby="progress-label"></progress><span id="progress-label">Progress: 0%</span></div>
+        <details id="quest-menu"><summary>Story menu</summary><p id="completed-objectives"></p><span id="inventory" class="inventory" hidden>Football packed</span>
+        <button id="choose-adventure" class="text-button" hidden>Choose / switch adventure</button>
+        <details id="recent-dialogue"><summary>Recent thoughts</summary><ol id="recent-thoughts"></ol></details>
+        <button id="restart-story" class="text-button">Restart Story</button>
+        <aside id="control-guide" class="control-guide" aria-label="Movement guide"><div><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> to walk</div><p>Or hold click / touch. <kbd>E</kbd> or tap a nearby prompt to interact.</p></aside></details>
       </div>
-      <canvas id="game"></canvas>
-    </div>
-    <script type="module" src="src/main.js"></script>
-  </body>
+    </aside>
+    <div id="thought-bubble" class="thought-bubble" data-active="false" aria-hidden="true" role="status" aria-live="polite"><p></p></div>
+    <div id="direction-indicator" hidden aria-hidden="true">›</div>
+    <div id="world-labels" aria-hidden="true"></div>
+    <div id="time-transition" class="time-transition" data-active="false" aria-label="Evening transition">4 PM <span>→</span> 6 PM</div>
+    <section id="textbox-container" class="info-panel" data-active="false" aria-hidden="true" inert aria-labelledby="dialogue-title">
+      <div id="textbox"><h2 id="dialogue-title"></h2><p id="dialogue"></p><p id="story-note" class="story-note" hidden></p>
+        <button id="interact" hidden>Interact · E / tap</button><p id="interaction-note" class="interaction-note"></p>
+        <div class="portfolio-action"><a id="portfolio-link" target="_blank" rel="noopener noreferrer" hidden>Open portfolio ↗</a><span id="portfolio-hint">Click the link or press E · opens a new tab</span></div>
+      </div>
+    </section>
+    <section id="adventure-choices" class="adventure-choices" hidden aria-labelledby="adventure-title">
+      <header><h2 id="adventure-title">Choose your design adventure</h2><button id="close-choices" aria-label="Close choices and keep exploring">×</button></header>
+      <p>Pick a direction. Open the portfolio when you reach its workstation.</p>
+      <div class="choice-grid"><button data-category="uiux" aria-pressed="false"><strong>UI/UX DESIGN</strong><span>Head to the laptop</span></button><button data-category="industrial" aria-pressed="false"><strong>INDUSTRIAL DESIGN</strong><span>Head to the prototype table</span></button></div>
+    </section>
+    <section id="accessible-view" class="accessible-view" hidden aria-labelledby="accessible-title">
+      <h1 id="accessible-title">My design world</h1><p>Open either portfolio now. Your story progress stays right where you left it.</p>
+      <h2>Explore my work</h2><div id="accessible-links"></div>
+      <details><summary>Read my story without game controls</summary><div id="accessible-story"></div></details>
+      <button id="return-game">Return to the story</button>
+    </section>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>
