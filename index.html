@@ -35,14 +35,15 @@
     <section id="help-panel" class="help-panel" hidden aria-labelledby="help-title">
       <header><h2 id="help-title">Explore Vishnu’s world</h2><button id="dismiss-help" aria-label="Dismiss control guide">×</button></header>
       <p><kbd>← ↑ ↓ →</kbd> or WASD: walk, or hold click / touch.</p>
-      <p><kbd>SPACE</kbd> Interact, or tap the nearby action.</p>
+      <p><kbd>SPACE</kbd> Interact, advance thoughts, skip a scene, or close the certificate. You can also tap the nearby action.</p>
       <p><strong>View My Work</strong> opens both portfolios anytime.</p>
-      <p><strong>Sound on / off</strong> controls audio. <kbd>SPACE</kbd> advances a thought.</p>
+      <p><strong>Sound on / off</strong> controls audio. <kbd>Escape</kbd> closes open panels or asks to restart your day.</p>
       <button id="start-exploring">Start Exploring</button>
     </section>
-    <div id="thought-bubble" class="thought-bubble" data-active="false" aria-hidden="true"><p role="status" aria-live="polite"></p><button id="advance-thought" aria-label="Dismiss this thought and show the next, if any">SPACE — NEXT THOUGHT</button></div>
-    <div id="quest-pin" hidden aria-hidden="true"><svg viewBox="0 0 16 20" shape-rendering="crispEdges"><path d="M4 1H12V3H14V13H12V15H10V17H9V19H7V17H6V15H4V13H2V3H4Z" fill="#ffce88" stroke="#311047" stroke-width="2"/><path d="M6 5H10V9H6Z" fill="#311047"/></svg></div>
-    <div id="direction-indicator" hidden aria-hidden="true">›</div>
+    <div id="thought-bubble" class="thought-bubble" data-active="false" aria-hidden="true"><p role="status" aria-live="polite"></p><button id="advance-thought" aria-label="Dismiss this thought">SPACE — DISMISS THOUGHT</button></div>
+    <div id="quest-pin" hidden aria-hidden="true"><svg viewBox="0 0 16 20" shape-rendering="crispEdges"><path d="M4 1H12V3H14V13H12V15H10V17H9V19H7V17H6V15H4V13H2V3H4Z" fill="#ef4b50" stroke="#fff0d1" stroke-width="2"/><path d="M6 5H10V9H6Z" fill="#311047"/></svg></div>
+    <div id="direction-indicator" hidden aria-hidden="true"><svg viewBox="0 0 32 32" shape-rendering="crispEdges"><path d="M3 11H17V4L29 16L17 28V21H3Z" fill="#ef4b50" stroke="#311047" stroke-width="3"/><path d="M3 11H17V4L29 16L17 28V21H3Z" fill="none" stroke="#fff0d1" stroke-width="1"/></svg></div>
+    <div id="quest-reveal" hidden aria-hidden="true"></div>
     <div id="world-labels" aria-hidden="true"></div>
     <div id="time-transition" class="time-transition" data-active="false" aria-label="Evening transition">4 PM <span>→</span> 6 PM</div>
     <section id="textbox-container" class="info-panel" data-active="false" aria-hidden="true" inert aria-labelledby="dialogue-title">
@@ -52,14 +53,10 @@
       </div>
     </section>
     <section id="adventure-choices" class="adventure-choices" hidden aria-labelledby="adventure-title">
-      <header><h2 id="adventure-title">Choose your design adventure</h2><button id="close-choices" aria-label="Close choices and keep exploring">×</button></header>
-      <p>Select a category, then head to its workstation or open the portfolio directly.</p>
+      <header><h2 id="adventure-title">Choose your design journey</h2><button id="close-choices" aria-label="Close choices and keep exploring">×</button></header>
+      <p>Which side of my design journey would you like to explore?</p>
       <div class="choice-grid"><button data-category="uiux" aria-pressed="false"><strong>UI/UX DESIGN</strong><span>Head to the laptop</span></button><button data-category="industrial" aria-pressed="false"><strong>INDUSTRIAL DESIGN</strong><span>Head to the prototype table</span></button></div>
-      <div id="adventure-actions" hidden>
-        <p id="selected-adventure" aria-live="polite"></p>
-        <div class="adventure-action-grid"><button id="head-workstation">Head to Workstation</button><a id="skip-selected-portfolio" target="_blank" rel="noopener noreferrer">Skip to Portfolio ↗</a></div>
-        <small>Skipping opens your work directly and leaves Quest 6 unfinished.</small>
-      </div>
+
     </section>
     <section id="accessible-view" class="accessible-view" hidden aria-labelledby="accessible-title">
       <h1 id="accessible-title">My design world</h1><p>Open either portfolio now. Your story progress stays right where you left it.</p>
@@ -68,6 +65,10 @@
       <button id="return-game">Return to the story</button>
     </section>
   </div>
+  <dialog id="certificate-modal" aria-labelledby="certificate-heading"><button id="close-certificate" aria-label="Close certificate">×</button><div class="certificate-paper"><h2 id="certificate-heading">DESIGN THINKER</h2><p>VIA VIT SCHOOL OF DESIGN</p><small>A personal design-journey statement.</small></div><p>SPACE or Escape — close</p></dialog>
+  <dialog id="restart-confirm" aria-labelledby="restart-heading"><h2 id="restart-heading">RESTART YOUR DAY?</h2><p>Would you like to start the story again?</p><div class="choice-grid"><button id="yes-restart">YES, RESTART</button><button id="no-restart">NO, CONTINUE</button></div></dialog>
+  <section id="auto-walk-feedback" hidden role="status"><p id="auto-walk-status"></p><a id="auto-portfolio-fallback" hidden target="_blank" rel="noopener noreferrer">Open Portfolio ↗</a></section>
+  <section id="journey-complete" hidden aria-labelledby="completion-heading"><h2 id="completion-heading">YOUR DESIGN JOURNEY IS COMPLETE!</h2><p>Thanks for exploring my world. What would you like to do next?</p><a id="completion-portfolio" target="_blank" rel="noopener noreferrer">EXPLORE MY PORTFOLIO →</a><div class="choice-grid"><button id="resume-game">RESUME GAME</button><button id="completion-restart">RESTART GAME</button></div></section>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

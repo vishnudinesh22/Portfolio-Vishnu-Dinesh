@@ -20,16 +20,25 @@ export function createFloatingLabels(container, objects) {
       element.dataset.selected = String(Boolean(object.link) && object.id === selectedId);
       if (element.dataset.active !== String(active)) element.dataset.active = String(active);
       if (!active) { element.dataset.revealed = "false"; continue; }
-      // The laptop sits against the upper wall; place its name above the wall
-      // rather than covering the original wall artwork.
-      const point = toScreen(object.labelX ?? object.x, object.id === "uiux" ? 62 : object.labelY ?? object.y - 18);
+      // Activation happens even off-screen; camera entry never replays the pop.
+      element.dataset.revealed = "true";
+      // Labels follow their original workstation coordinates with the camera.
+      const point = toScreen(object.labelX ?? object.x, object.labelY ?? object.y - 18);
       const objectPoint = toScreen(object.x, object.y);
-      if (object.link && (objectPoint.x < 0 || objectPoint.x > viewport.width || objectPoint.y < 0 || objectPoint.y > viewport.height)) {
+      if (objectPoint.x < 0 || objectPoint.x > viewport.width || objectPoint.y < 0 || objectPoint.y > viewport.height) {
         element.style.visibility = "hidden";
         continue;
       }
       const width = element.offsetWidth;
       const height = element.offsetHeight;
+      if (!object.link) {
+        const left=point.x-width/2, top=point.y-height;
+        const box={left,right:left+width,top,bottom:top+height};
+        element.style.left=left+"px";element.style.top=top+"px";
+        element.style.visibility=occupied.some(other=>overlaps(box,other))?"hidden":"visible";
+        occupied.push(box);
+        continue;
+      }
       const positions = object.link ? [
         { x: point.x - width / 2, y: point.y - height },
         { x: point.x + 25, y: point.y - height },

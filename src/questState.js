@@ -1,25 +1,22 @@
 export const STORY_STORAGE_KEY = "a-day-in-my-world-story-v1";
+import { readStorySave, writeStorySave } from "./storyPersistence.js";
 const categories = new Set(["uiux", "industrial"]);
 
-// One state machine owns ordering, unique completions, restoration, and category changes.
+// One state machine owns ordering, unique completions, presentation, and categories.
 export function createQuestMachine(quests, storage) {
-  let completed = [];
-  let selectedCategory = null;
-  let pending = null;
-  try {
-    const saved = JSON.parse(storage?.getItem(STORY_STORAGE_KEY) || "null");
-    if (saved?.version === 1 && Array.isArray(saved.completed)) {
-      for (const quest of quests) {
-        if (saved.completed[completed.length] !== quest.id) break;
-        completed.push(quest.id);
-      }
-      if (categories.has(saved.selectedCategory) && completed.length >= 5) selectedCategory = saved.selectedCategory;
-      // Older saves completed on selection; require a workstation visit after migration.
-      if (completed.length === 6 && (!selectedCategory || saved.rules !== 2)) completed.pop();
-    }
-  } catch { /* Invalid or unavailable persistence starts a fresh, usable story. */ }
+  const restored=readStorySave(storage,STORY_STORAGE_KEY,quests);
+  let completed = restored?.completed || [];
+  let selectedCategory = restored?.selectedCategory || null;
+  let pending = restored?.pending || null;
+  let position=restored?.position || null;
+  let thoughtsSeen=restored?.thoughtsSeen || [];
+  let completionDismissed=restored?.completionDismissed || false;
+  let walking=restored?.walking || false;
+  let presentation = null;
   function save() {
-    try { storage?.setItem(STORY_STORAGE_KEY, JSON.stringify({ version: 1, rules: 2, completed, selectedCategory })); } catch { /* Optional storage. */ }
+    writeStorySave(storage,STORY_STORAGE_KEY,{completed,selectedCategory,pending,position,thoughtsSeen,completionDismissed,walking,
+      footballCollected:completed.includes("football"),tvActivated:completed.includes("tv"),certificateCompleted:completed.includes("degree"),
+      cyclingCompleted:completed.includes("cycling"),sofaSceneCompleted:completed.includes("couch"),autoWalkCompleted:completed.length===6&&!walking,storyComplete:completed.length===6});
   }
   function getState() {
     return {
@@ -29,8 +26,9 @@ export function createQuestMachine(quests, storage) {
       progress: Math.round(completed.length / quests.length * 100),
       selectionReady: completed.length >= 5,
       storyComplete: completed.length === 6,
-      phase: pending ? "COMPLETION_DIALOGUE" : completed.length === 6 ? "STORY_COMPLETE" : completed.length === 5 && !selectedCategory ? "PORTFOLIO_SELECTION" : "QUEST_ACTIVE",
+      phase: presentation || (pending ? "COMPLETION_DIALOGUE" : completed.length === 6 ? "STORY_COMPLETE" : completed.length === 5 && !selectedCategory ? "PORTFOLIO_SELECTION" : "QUEST_ACTIVE"),
       pending,
+      position:position&&{...position},thoughtsSeen:[...thoughtsSeen],completionDismissed,walking,
       time: completed.length >= 2 ? "6 PM" : "4 PM",
     };
   }
@@ -41,7 +39,19 @@ export function createQuestMachine(quests, storage) {
       completed = [];
       selectedCategory = null;
       pending = null;
+      presentation = null;
+      position=null;thoughtsSeen=[];completionDismissed=false;walking=false;
+      try{storage?.removeItem?.(STORY_STORAGE_KEY);}catch{}
       changed = true;
+    } else if (action.type === "presentation") {
+      presentation = action.phase;
+      changed = true;
+    } else if(action.type==="snapshot") {
+      if(action.position)position={x:action.position.x,y:action.position.y};
+      if(action.thought&&!thoughtsSeen.includes(action.thought))thoughtsSeen.push(action.thought);
+      if(typeof action.completionDismissed==="boolean")completionDismissed=action.completionDismissed;
+      if(typeof action.walking==="boolean")walking=action.walking;
+      changed=true;
     } else if (action.type === "interact" && !pending && completed.length < 5 && quests[completed.length].id === action.id) {
       pending = action.id;
       changed = true;
@@ -54,9 +64,10 @@ export function createQuestMachine(quests, storage) {
       selectedCategory = action.category;
     } else if (action.type === "visit" && completed.length === 5 && selectedCategory === action.category) {
       completed.push(quests[5].id);
+      completionDismissed=false;
       completedNow = changed = true;
     }
-    if (changed) save();
+    if(changed&&action.type!=="presentation"&&action.type!=="restart")save();
     return { changed, completedNow, state: getState() };
   }
   return { getState, dispatch };

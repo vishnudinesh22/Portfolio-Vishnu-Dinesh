@@ -5,14 +5,21 @@ export function createDialogueQueue(element, historyList) {
   let current;
   let timer;
   let finishing = false;
+  let paused = false, remaining = 0, callback, deadline = 0;
+  function schedule(fn,delay) {
+    callback=fn; remaining=delay; deadline=Date.now()+delay;
+    if (!paused) timer=setTimeout(fn,delay);
+  }
+  function pause() { if(paused)return; paused=true; remaining=Math.max(0,deadline-Date.now()); clearTimeout(timer); }
+  function resume() { if(!paused)return; paused=false; if(callback)schedule(callback,remaining); }
   function advance() {
-    if (!current || finishing) return;
+    if (!current || finishing || paused) return;
     clearTimeout(timer);
     finishing = true;
     current.onEnd?.();
     element.dataset.active = "false";
     element.setAttribute("aria-hidden", "true");
-    timer = setTimeout(next, 180);
+    schedule(next, 180);
   }
   function next() {
     finishing = false;
@@ -33,8 +40,8 @@ export function createDialogueQueue(element, historyList) {
       return item;
     }));
     current.onStart?.();
-    const milliseconds = current.duration ?? Math.min(7200, Math.max(3400, 1100 + current.text.split(/\s+/).length * 310));
-    timer = setTimeout(advance, milliseconds);
+    const milliseconds = current.duration ?? Math.min(7200, Math.max(2200, 800 + current.text.split(/\s+/).length * 250));
+    schedule(advance, milliseconds);
   }
   function enqueue(messages) {
     for (const message of messages) {
@@ -49,6 +56,7 @@ export function createDialogueQueue(element, historyList) {
     waiting.length = 0;
     current = undefined;
     finishing = false;
+    paused = false; callback=undefined;
     recent.length = 0;
     historyList.replaceChildren();
     element.dataset.active = "false";
@@ -82,5 +90,5 @@ export function createDialogueQueue(element, historyList) {
     element.style.top = top + "px";
     element.style.setProperty("--tail-x", Math.max(16, Math.min(width - 16, point.x - left)) + "px");
   }
-  return { enqueue, clear, advance, position, isActive: () => element.dataset.active === "true", isBusy: () => Boolean(current || waiting.length) };
+  return { enqueue, clear, advance, pause, resume, position, isActive: () => element.dataset.active === "true", isBusy: () => Boolean(current || waiting.length) };
 }

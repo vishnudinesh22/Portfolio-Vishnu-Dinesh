@@ -31,7 +31,7 @@ test("thoughts stay readable, play in order, avoid duplicate overlap, and cancel
     queue.enqueue(["First thought", "Second thought"]);
     assert.equal(paragraph.textContent, "First thought");
     assert.equal(queue.isActive(), true);
-    assert.ok(tick() >= 3400, "A thought gets a readable duration");
+    assert.ok(tick() >= 2200, "A short thought gets a readable duration without gating gameplay");
     assert.equal(queue.isActive(), false, "Fade-out gap separates messages");
     assert.equal(tick(), 180);
     assert.equal(paragraph.textContent, "Second thought");
@@ -44,6 +44,12 @@ test("thoughts stay readable, play in order, avoid duplicate overlap, and cancel
     queue.clear();
     let reactions = 0;
     queue.enqueue([{ text: "Voluntary dismissal", onEnd: () => reactions++ }, "Next reaction"]);
+    queue.pause();
+    assert.equal(timers.size,0,"Restart confirmation pauses dialogue timers");
+    queue.advance();
+    assert.equal(reactions,0,"Space cannot advance paused dialogue");
+    queue.resume();
+    assert.equal(timers.size,1,"Continuing restores exactly one timer");
     queue.advance();
     queue.advance();
     assert.equal(reactions, 1, "Repeated dismissal cannot repeat a quest transition");

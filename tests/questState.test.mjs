@@ -1,62 +1,40 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { createQuestMachine, STORY_STORAGE_KEY } from "../src/questState.js";
-import { portfolioConfig } from "../src/portfolioConfig.js";
-const quests = portfolioConfig.story.quests;
-function memory(initial) {
-  let value = initial;
-  return { getItem: () => value, setItem: (key, next) => { assert.equal(key, STORY_STORAGE_KEY); value = next; } };
-}
-test("six objectives complete only in order; revisits and switching do not add progress", () => {
-  const machine = createQuestMachine(quests, memory());
-  assert.equal(machine.dispatch({ type: "interact", id: "degree" }).changed, false);
-  assert.equal(machine.dispatch({ type: "choose", category: "uiux" }).changed, false);
-  for (const quest of quests.slice(0, 5)) {
-    assert.equal(machine.dispatch({ type: "interact", id: quest.id }).changed, true);
-    assert.equal(machine.getState().phase, "COMPLETION_DIALOGUE");
-    assert.equal(machine.dispatch({ type: "interact", id: quest.id }).completedNow, false);
-    assert.equal(machine.dispatch({ type: "dialogue-finished", id: quest.id }).completedNow, true);
-  }
-  assert.equal(machine.getState().progress, 83);
-  assert.equal(machine.getState().storyComplete, false);
-  assert.equal(machine.dispatch({ type: "choose", category: "uiux" }).completedNow, false);
-  assert.equal(machine.dispatch({ type: "visit", category: "industrial" }).completedNow, false);
-  assert.equal(machine.getState().progress, 83);
-  assert.equal(machine.dispatch({ type: "visit", category: "uiux" }).completedNow, true);
-  assert.equal(machine.dispatch({ type: "choose", category: "industrial" }).completedNow, false);
-  assert.equal(machine.getState().progress, 100);
-  assert.equal(machine.getState().selectedCategory, "industrial");
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createQuestMachine,STORY_STORAGE_KEY} from '../src/questState.js';
+import {portfolioConfig} from '../src/portfolioConfig.js';
+const quests=portfolioConfig.story.quests;
+function memory(initial){let value=initial;return{getItem:()=>value,setItem:(key,next)=>{assert.equal(key,STORY_STORAGE_KEY);value=next;},removeItem:()=>value=null};}
+function finish(machine,id){machine.dispatch({type:'interact',id});machine.dispatch({type:'dialogue-finished',id});}
+test('ordered unique completions, category switching, and one victory eligibility',()=>{
+ const m=createQuestMachine(quests,memory());assert.equal(m.dispatch({type:'interact',id:'degree'}).changed,false);
+ for(const q of quests.slice(0,5))finish(m,q.id);
+ m.dispatch({type:'choose',category:'uiux'});assert.equal(m.dispatch({type:'visit',category:'industrial'}).completedNow,false);
+ assert.equal(m.dispatch({type:'visit',category:'uiux'}).completedNow,true);assert.equal(m.dispatch({type:'visit',category:'uiux'}).completedNow,false);
+ m.dispatch({type:'choose',category:'industrial'});assert.equal(m.getState().progress,100);
 });
-test("saved progress restores clock, selection, and collected objectives; restart is independent", () => {
-  const storage = memory();
-  const machine = createQuestMachine(quests, storage);
-  for (const quest of quests.slice(0, 5)) {
-    machine.dispatch({ type: "interact", id: quest.id });
-    machine.dispatch({ type: "dialogue-finished", id: quest.id });
-  }
-  machine.dispatch({ type: "choose", category: "uiux" });
-  const restored = createQuestMachine(quests, storage);
-  assert.deepEqual(restored.getState(), machine.getState());
-  assert.equal(restored.getState().time, "6 PM");
-  restored.dispatch({ type: "restart" });
-  assert.equal(createQuestMachine(quests, storage).getState().progress, 0);
-  assert.equal(restored.getState().time, "4 PM");
+test('refresh retains Quest 2, safe position data and football collection without replaying thoughts',()=>{
+ const storage=memory(),m=createQuestMachine(quests,storage);finish(m,'football');m.dispatch({type:'snapshot',position:{x:152,y:132},thought:'cycling'});
+ const restored=createQuestMachine(quests,storage).getState();assert.equal(restored.questIndex,1);assert.deepEqual(restored.completed,['football']);assert.deepEqual(restored.position,{x:152,y:132});assert.deepEqual(restored.thoughtsSeen,['cycling']);
 });
-test("invalid, non-contiguous, and unavailable storage cannot skip objectives or crash the game", () => {
-  assert.equal(createQuestMachine(quests, memory("bad json")).getState().progress, 0);
-  assert.equal(createQuestMachine(quests, memory(JSON.stringify({ version: 1, completed: ["football", "degree"] }))).getState().completed.length, 1);
-  const machine = createQuestMachine(quests, { getItem() { throw Error("disabled"); }, setItem() { throw Error("disabled"); } });
-  assert.equal(machine.dispatch({ type: "interact", id: "football" }).changed, true);
-  assert.equal(machine.dispatch({ type: "dialogue-finished", id: "football" }).completedNow, true);
+test('certificate, walking, completion and free exploration survive refresh',()=>{
+ const storage=memory(),m=createQuestMachine(quests,storage);for(const q of quests.slice(0,5))finish(m,q.id);
+ m.dispatch({type:'choose',category:'industrial'});m.dispatch({type:'snapshot',walking:true,position:{x:200,y:120}});
+ assert.equal(createQuestMachine(quests,storage).getState().walking,true);
+ m.dispatch({type:'visit',category:'industrial'});m.dispatch({type:'snapshot',walking:false});
+ assert.equal(createQuestMachine(quests,storage).getState().storyComplete,true);assert.equal(createQuestMachine(quests,storage).getState().completionDismissed,false);
+ m.dispatch({type:'snapshot',completionDismissed:true});assert.equal(createQuestMachine(quests,storage).getState().completionDismissed,true);
 });
-
-test("refresh during a reaction safely replays the unfinished objective; old selection saves migrate", () => {
-  const storage = memory();
-  const machine = createQuestMachine(quests, storage);
-  machine.dispatch({ type: "interact", id: "football" });
-  const restored = createQuestMachine(quests, storage);
-  assert.equal(restored.getState().pending, null);
-  assert.equal(restored.getState().progress, 0);
-  const old = createQuestMachine(quests, memory(JSON.stringify({ version: 1, completed: quests.map(q => q.id), selectedCategory: "uiux" })));
-  assert.equal(old.getState().progress, 83);
+test('interrupted cutscene remains pending; completed scene is never replayed',()=>{
+ const storage=memory(),m=createQuestMachine(quests,storage);finish(m,'football');m.dispatch({type:'interact',id:'cycling'});
+ assert.equal(createQuestMachine(quests,storage).getState().pending,'cycling');m.dispatch({type:'dialogue-finished',id:'cycling'});
+ assert.equal(createQuestMachine(quests,storage).getState().pending,null);assert.equal(createQuestMachine(quests,storage).getState().questIndex,2);
+});
+test('corrupt, incompatible, noncontiguous and unavailable storage recover safely',()=>{
+ for(const value of ['invalid',JSON.stringify({version:2,completed:[]}),JSON.stringify({version:3,completed:['football','degree']}),JSON.stringify({version:3,completed:quests.map(q=>q.id)})])assert.equal(createQuestMachine(quests,memory(value)).getState().progress,0);
+ const m=createQuestMachine(quests,{getItem(){throw Error();},setItem(){throw Error();}});finish(m,'football');assert.equal(m.getState().questIndex,1);
+});
+test('restart removes only story progress and modal presentation does not erase pending progress',()=>{
+ const values=new Map([['design-world-sound','off'],['a-day-tracker-collapsed','yes']]);const storage={getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
+ const m=createQuestMachine(quests,storage);m.dispatch({type:'interact',id:'football'});m.dispatch({type:'presentation',phase:'RESTART_CONFIRMATION'});assert.equal(m.getState().pending,'football');m.dispatch({type:'restart'});
+ assert.equal(values.has(STORY_STORAGE_KEY),false);assert.equal(values.get('design-world-sound'),'off');assert.equal(values.get('a-day-tracker-collapsed'),'yes');assert.equal(m.getState().progress,0);
 });

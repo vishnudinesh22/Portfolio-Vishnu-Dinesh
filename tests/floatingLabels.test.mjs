@@ -24,3 +24,22 @@ test("workstation labels unlock together, keep their reveal when switching or mo
     update(base);assert.ok(elements.every(e=>e.dataset.active==="false"&&e.dataset.revealed==="false"));
   } finally { if(original===undefined)delete globalThis.document;else globalThis.document=original; }
 });
+
+test("active quest labels activate off-screen, stay attached to their object, and do not wait for proximity",()=>{
+  const original=globalThis.document;
+  try{
+    globalThis.document={createElement:()=>({dataset:{},style:{},offsetWidth:150,offsetHeight:24})};
+    let element;
+    const update=createFloatingLabels({append:e=>element=e},[{id:"cycling",label:"ROCKY THE CYCLE",x:198,y:119,labelY:106}]);
+    let shift=1000;
+    const base={activeId:"cycling",toScreen:(x,y)=>({x:x+shift,y:y+100}),viewport:{width:800,height:600},exclusions:[]};
+    update(base);
+    assert.equal(element.dataset.active,"true");assert.equal(element.dataset.revealed,"true");
+    assert.equal(element.style.visibility,"hidden","Off-screen labels are never clamped to the viewport");
+    shift=0;update(base);
+    assert.equal(element.style.left,"123px");assert.equal(element.style.top,"182px");
+    assert.equal(element.style.visibility,"visible");assert.equal(element.dataset.revealed,"true");
+    update({...base,exclusions:[{left:0,right:500,top:0,bottom:500}]});
+    assert.equal(element.style.left,"123px","HUD occlusion never relocates the label away from the object");
+  }finally{if(original===undefined)delete globalThis.document;else globalThis.document=original;}
+});

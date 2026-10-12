@@ -17,8 +17,8 @@ export function getWorldObjects(config, mapData) {
     { id: "football", title: "Football first", label: config.objectNames.football, text: config.footballDialogue, x: 153, y: 135, labelY: 126 },
     { id: "cycling", title: config.objectNames.cycling, label: config.objectNames.cycling, text: config.cyclingDialogue, x: 198, y: 119, labelY: 106 },
     { id: "couch", title: config.objectNames.couch, label: config.objectNames.couch, text: config.couchDialogue, x: couch.x + couch.width / 2, y: couch.y + couch.height, labelY: couch.y - 2 },
-    { id: "tv", title: config.objectNames.tv, label: config.objectNames.tv, text: dialogueData.tv, x: tv.x + tv.width / 2, y: tv.y + tv.height / 2, labelY: tv.y - 2 },
-    { id: "degree", title: config.objectNames.degree, label: config.objectNames.degree, text: config.story.degree[0] + "\n" + config.degree + "\n" + config.institution, note: config.story.certificateNote, x: degree.x + degree.width / 2, y: degree.y + degree.height, labelY: degree.y - 2 },
+    { id: "tv", title: config.objectNames.tv, label: config.objectNames.tv, text: "Where I unwind with my favourite series and movies.", x: tv.x + tv.width / 2, y: tv.y + tv.height / 2, labelY: tv.y - 2 },
+    { id: "degree", title: config.objectNames.degree, label: config.objectNames.degree, text: "DESIGN THINKER\nVIA VIT SCHOOL OF DESIGN\n" + config.degree + "\n" + config.institution, note: config.story.certificateNote, x: degree.x + degree.width / 2, y: degree.y + degree.height, labelY: degree.y - 2 },
     { id: "uiux", title: "Explore My UI/UX Work", label: config.objectNames.uiux, text: "Digital experiences, interfaces, interactions, and human-centred solutions.", x: 238, y: 89, labelY: 77, link: config.uiuxPortfolioUrl },
     { id: "industrial", title: "Explore My Industrial Design Work", label: config.objectNames.industrial, text: "Physical products, thoughtful forms, materials, ergonomics, and problem-solving.", x: prototype.x + prototype.width / 2, y: prototype.y + 17, labelY: prototype.y - 2, link: config.industrialDesignPortfolioUrl },
   ];

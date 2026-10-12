@@ -2,6 +2,7 @@ import { scaleFactor } from "./constants";
 import { k } from "./kaboomCtx";
 import { setCamScale } from "./utils";
 import { setupStory } from "./story";
+import { loadPalettes, applyFloorPalette, addSofa } from "./palette";
 import "./style.css";
 
 k.loadSprite("spritesheet", "./spritesheet.png", {
@@ -18,6 +19,7 @@ k.loadSprite("spritesheet", "./spritesheet.png", {
 });
 
 k.loadSprite("map", "./map.png");
+loadPalettes(k);
 k.loadFont("Bungee", "./fonts/Bungee-Regular.ttf");
 k.loadFont("Nunito", "./fonts/Nunito-Variable.ttf");
 for (const name of ["football", "bicycle", "laptop", "prototype"]) {
@@ -31,6 +33,8 @@ k.scene("main", async () => {
   const layers = mapData.layers;
 
   const map = k.add([k.sprite("map"), k.pos(0), k.scale(scaleFactor)]);
+  applyFloorPalette(k, map, mapData);
+  addSofa(k,map);
 
   const player = k.make([
     k.sprite("spritesheet", { anim: "idle-down" }),
