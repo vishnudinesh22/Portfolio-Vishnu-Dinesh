@@ -10,7 +10,7 @@ The Certified Design Thinker caption is a personal storytelling statement, not a
 
 ## Explore
 
-Use arrow keys or hold click/touch to walk. Nearby information and floating object labels appear automatically. Press E or tap a nearby interaction prompt to complete the current objective:
+Use arrow keys or hold click/touch to walk. Nearby information and floating object labels appear automatically. Press Space or tap a nearby interaction prompt to complete the current objective:
 
 1. Collect the football.
 2. Meet Rocky, the bicycle; the evening advances from 4 PM to 6 PM.
@@ -19,15 +19,17 @@ Use arrow keys or hold click/touch to walk. Nearby information and floating obje
 5. Read the design certificate and complete the personal story.
 6. Choose UI/UX Design or Industrial Design, then follow the hint to its workstation.
 
-Choosing a category guides you; it does not open an external page. At either workstation, press E or click Open portfolio to deliberately open the configurable destination in a new tab with noopener noreferrer. Categories can be switched, and either workstation can be revisited.
+Choosing a category reveals Head to Workstation and Skip to Portfolio. Head to Workstation activates guidance; Skip to Portfolio opens that category’s configured URL immediately without completing Quest 6 or playing the celebration. At either workstation, press Space or click Open portfolio to deliberately open the configurable destination in a new tab with noopener noreferrer. Categories can be switched, and either workstation can be revisited.
+
+Space is the single gameplay interaction key: dialogue takes priority, then the nearby object. Messages already appear in full, and each press advances just one thought. Native Space behavior remains available on focused HTML menu controls. The first chosen workstation reserves a tab immediately, starts the existing completion sound, and navigates after 850 ms; blocked tabs expose the direct links. Revisits and View My Work open normally without another celebration. Amber pixel pins mark only the active target, with collision-aware edge guidance when it is off-screen.
 
 Dialogue bubbles follow the character and play through a readable queue without blocking movement. Recent thoughts and the current objective are available in the collapsible quest tracker. Only the current objective has a marker and discovery label. An off-screen arrow follows collision-aware waypoints. A restrained one-second camera glance yields to pointer movement and reduced-motion preferences.
 
-Skip to Portfolio offers accessible immediate links and all personal content without changing story progress. It is a non-modal view; the game stays active. Escape or Return to the story closes it.
+View My Work offers accessible immediate links and all personal content without changing story progress. It is a non-modal view; the game stays active. Escape or Return to the story closes it. The first-visit control guide can be dismissed with Start Exploring, the close button, or Escape, and stays dismissed for that browser-tab session. Help reopens it without changing quests. Ordinary thoughts auto-dismiss as before; Next thought or Space voluntarily advances exactly one message and preserves its quest-transition callback.
 
 ## Progress and sound
 
-Unique quest completions, football collection, story time, and the selected category are saved under `a-day-in-my-world-story-v1` when local storage is available. Refresh resumes the current objective without replaying achievements. Restart Story clears story progress and queued dialogue, restores the football, and leaves character movement and sound preferences intact.
+Unique quest completions, football collection, story time, and the selected category are saved under `a-day-in-my-world-story-v1` when local storage is available. Refresh resumes the current objective without replaying achievements. Restart Game appears in the story menu only after all six objectives are completed. It clears story progress and queued dialogue, restores the football, and leaves character position, movement, and sound preferences intact.
 
 The tracker shows 83% after the personal story and 100% after interacting with the chosen workstation. Repeated interactions and category switching do not add progress or replay achievements.
 

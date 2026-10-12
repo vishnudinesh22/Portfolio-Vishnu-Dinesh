@@ -7,6 +7,8 @@ import { createDialogueQueue } from "./dialogueQueue";
 import { createFloatingLabels } from "./floatingLabels";
 import { getWorldObjects, workstationLayout } from "./worldObjects";
 import { createNavigator } from "./navigation";
+import { createPortfolioTransition } from "./portfolioTransition";
+import { placeEdgeArrow } from "./questGuidance";
 
 export function setupStory(k, map, player, mapData) {
   let storage;
@@ -23,6 +25,24 @@ export function setupStory(k, map, player, mapData) {
   const actionButton = document.getElementById("interact");
   const choices = document.getElementById("adventure-choices");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const help = document.getElementById("help-panel");
+  function closeHelp() {
+    help.hidden = true;
+    document.getElementById("help-toggle").setAttribute("aria-expanded", "false");
+    try { sessionStorage.setItem("vishnu-controls-seen", "yes"); } catch { /* Optional session preference. */ }
+    document.getElementById("game").focus({ preventScroll: true });
+  }
+  function openHelp() {
+    help.hidden = false;
+    document.getElementById("help-toggle").setAttribute("aria-expanded", "true");
+    document.getElementById("start-exploring").focus({ preventScroll: true });
+  }
+  document.getElementById("help-toggle").addEventListener("click", () => help.hidden ? openHelp() : closeHelp());
+  document.getElementById("start-exploring").addEventListener("click", closeHelp);
+  document.getElementById("dismiss-help").addEventListener("click", closeHelp);
+  document.getElementById("advance-thought").addEventListener("click", () => { queue.advance(); document.getElementById("game").focus({ preventScroll: true }); });
+
+  try { if (sessionStorage.getItem("vishnu-controls-seen") !== "yes") openHelp(); } catch { openHelp(); }
   let nearby;
   let navigationCategory = machine.getState().selectedCategory;
   let navigating = !machine.getState().storyComplete;
@@ -71,6 +91,7 @@ export function setupStory(k, map, player, mapData) {
     renderPanels();
   }
   document.getElementById("quick-access").addEventListener("click", () => {
+    if (!help.hidden) closeHelp();
     accessible.hidden = !accessible.hidden;
     document.getElementById("quick-access").setAttribute("aria-expanded", String(!accessible.hidden));
     if (!accessible.hidden) {
@@ -84,6 +105,7 @@ export function setupStory(k, map, player, mapData) {
   document.getElementById("return-game").addEventListener("click", closeAccessible);
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !accessible.hidden) closeAccessible();
+    if (event.key === "Escape" && !help.hidden) closeHelp();
   });
 
   const football = map.add([k.sprite("football"), k.pos(147, 129), k.opacity(1), k.scale(1), "story-football"]);
@@ -97,10 +119,6 @@ export function setupStory(k, map, player, mapData) {
   const tv = mapData.layers.find(layer => layer.name === "boundaries").objects.find(object => object.name === "tv");
   const tvGlow = map.add([k.pos(tv.x + 3, tv.y + 4), k.rect(8, 6), k.color(k.Color.fromHex("#72d8ce")), k.opacity(0), k.z(2)]);
 
-  const markers = objects.filter(object => object.label).map(object => ({
-    object,
-    marker: map.add([k.pos(object.x, object.y - 17), k.rect(3, 3), k.color(k.Color.fromHex("#ffce88")), k.opacity(0.5), k.z(10)]),
-  }));
   const arrow = map.add([k.text("›", { size: 8, font: "Bungee" }), k.pos(), k.anchor("center"), k.rotate(), k.color(k.Color.fromHex("#72d8ce")), k.opacity(0.6), k.z(10)]);
 
   let attentionUntil = 0;
@@ -109,9 +127,9 @@ export function setupStory(k, map, player, mapData) {
     const state = machine.getState();
     const quest = config.story.quests[state.questIndex];
     goal = state.completed.length < 5 ? byId(quest.id) : navigationCategory ? byId(navigationCategory) : undefined;
-    if (state.pending || introducing || (state.storyComplete && !navigating)) goal = undefined;
+    if (state.pending || introducing || (state.selectionReady && !navigating)) goal = undefined;
     if (goal?.id !== attentionId) { attentionId = goal?.id; attentionUntil = k.time() + 1; }
-    const objective = state.storyComplete && !navigating ? "Story complete · explore my work" : navigationCategory && state.selectionReady ? `Head to the ${navigationCategory === "uiux" ? "UI/UX laptop" : "Industrial Design table"}` : quest.objective;
+    const objective = state.storyComplete && !navigating ? "Story complete · explore my work" : navigationCategory && state.selectionReady && navigating ? `Head to the ${navigationCategory === "uiux" ? "UI/UX laptop" : "Industrial Design table"}` : quest.objective;
     document.getElementById("quest-number").textContent = `Quest ${state.questIndex + 1} of 6${state.completed.length === 6 ? " · complete" : ""}`;
     document.getElementById("quest-title").textContent = objective.toUpperCase();
     document.getElementById("quest-objective").textContent = objective;
@@ -122,6 +140,7 @@ export function setupStory(k, map, player, mapData) {
     document.getElementById("story-clock").textContent = state.time;
     document.getElementById("inventory").hidden = !state.completed.includes("football");
     document.getElementById("choose-adventure").hidden = !state.selectionReady;
+    document.getElementById("restart-story").hidden = !state.storyComplete;
     document.getElementById("compact-progress").textContent = `${state.progress}%`;
     document.getElementById("completed-objectives").textContent = state.completed.map(id => config.story.quests.find(q => q.id === id).objective).join(" · ") || "No objectives completed yet.";
     for (const button of document.querySelectorAll("[data-category]")) button.setAttribute("aria-pressed", String(button.dataset.category === navigationCategory));
@@ -131,6 +150,13 @@ export function setupStory(k, map, player, mapData) {
     const state = machine.getState();
     const showChoices = state.selectionReady && choicesOpen && accessible.hidden;
     choices.hidden = !showChoices;
+    const station = navigationCategory && byId(navigationCategory);
+    document.getElementById("adventure-actions").hidden = !station;
+    document.getElementById("selected-adventure").textContent = station ? `${station.label} selected. How would you like to explore?` : "";
+    const skipLink = document.getElementById("skip-selected-portfolio");
+    if (station) skipLink.href = station.link;
+    else skipLink.removeAttribute("href");
+    document.querySelector("#adventure-actions small").textContent = state.storyComplete ? "Open your work directly or revisit its workstation." : "Skipping opens your work directly and leaves Quest 6 unfinished.";
     const stop = accessible.hidden && !showChoices && !state.pending && !introducing ? nearby : undefined;
     showProximityInfo(stop);
     actionButton.hidden = true;
@@ -140,10 +166,10 @@ export function setupStory(k, map, player, mapData) {
     const expected = config.story.quests[state.questIndex].id;
     if (stop.id === expected && state.completed.length < 5) {
       actionButton.hidden = false;
-      actionButton.textContent = `${config.story.quests[state.questIndex].action} · E / tap`;
+      actionButton.textContent = `${config.story.quests[state.questIndex].action} · SPACE — INTERACT / tap`;
     } else if (state.completed.includes(stop.id)) {
       actionButton.hidden = false;
-      actionButton.textContent = `Revisit ${stop.label || stop.title} · E / tap`;
+      actionButton.textContent = `Revisit ${stop.label || stop.title} · SPACE — INTERACT / tap`;
     } else if (config.story.quests.some(quest => quest.id === stop.id)) {
       instruction.textContent = `Up next: ${config.story.quests[state.questIndex].objective}. Feel free to look around.`;
     }
@@ -158,14 +184,7 @@ export function setupStory(k, map, player, mapData) {
 
   function interact() {
     if (!nearby || !accessible.hidden || !choices.hidden) return;
-    if (nearby.link) {
-      const visited = machine.dispatch({ type: "visit", category: nearby.id });
-      if (visited.completedNow) sound.complete();
-      navigating = false;
-      refreshQuest();
-      window.open(nearby.link, "_blank", "noopener,noreferrer");
-      return;
-    }
+    if (nearby.link) { openStation(nearby); return; }
     if (queue.isBusy() || machine.getState().pending) return;
     const result = machine.dispatch({ type: "interact", id: nearby.id });
     if (!result.changed) {
@@ -195,12 +214,43 @@ export function setupStory(k, map, player, mapData) {
     renderPanels();
   }
   actionButton.addEventListener("click", () => { interact(); document.getElementById("game").focus({ preventScroll: true }); });
-  k.onKeyPress("e", interact);
-  document.getElementById("portfolio-link").addEventListener("click", event => {
-    const result = machine.dispatch({ type: "visit", category: nearby?.id });
-    if (result.completedNow) sound.complete();
+  const transition = createPortfolioTransition({
+    openTab: () => window.open("about:blank", "_blank"),
+    celebrate: () => {
+      sound.complete();
+      if (!reducedMotion.matches) tracker.animate?.([{ borderColor: "#ffce88" }, { borderColor: "#bb7c80" }], { duration: 850 });
+    },
+    feedback: text => {
+      document.getElementById("portfolio-status").textContent = text;
+      if (text.startsWith("Your browser blocked")) {
+        accessible.hidden = false;
+        document.getElementById("quick-access").setAttribute("aria-expanded", "true");
+        document.getElementById("accessible-feedback").textContent = text;
+        renderPanels();
+        document.querySelector("#accessible-links a")?.focus();
+      }
+    },
+  });
+  function openStation(station) {
+    if (!station?.link) return;
+    const result = machine.dispatch({ type: "visit", category: station.id });
     navigating = false;
     refreshQuest();
+    transition(station.link, result.completedNow);
+  }
+  document.addEventListener("keydown", event => {
+    if (event.code !== "Space" || event.target.closest?.("input, textarea, select, button, a, summary, [contenteditable='true'], [role='button']")) return;
+    if (!help.hidden || !accessible.hidden || !choices.hidden) return;
+    event.preventDefault();
+    if (event.repeat) return;
+    if (queue.isBusy()) { queue.advance(); return; }
+    interact();
+  });
+  document.getElementById("portfolio-link").addEventListener("click", event => {
+    if (transition.isPending()) { event.preventDefault(); return; }
+    if (machine.getState().storyComplete) return;
+    event.preventDefault();
+    openStation(nearby);
     if (event.detail > 0) document.getElementById("game").focus({ preventScroll: true });
   });
 
@@ -209,15 +259,25 @@ export function setupStory(k, map, player, mapData) {
       const result = machine.dispatch({ type: "choose", category: button.dataset.category });
       if (!result.state.selectionReady) return;
       navigationCategory = button.dataset.category;
-      navigating = true;
-      choicesOpen = false;
+      navigating = false;
+      choicesOpen = true;
 
       refreshQuest();
       renderPanels();
-      queue.enqueue([`Let's explore ${navigationCategory === "uiux" ? "UI/UX Design" : "Industrial Design"}. Follow the hint to the workstation, then open the portfolio when you're ready.`]);
-      document.getElementById("game").focus({ preventScroll: true });
+      document.getElementById("head-workstation").focus({ preventScroll: true });
     });
   }
+  document.getElementById("head-workstation").addEventListener("click", () => {
+    if (!navigationCategory || !machine.getState().selectionReady) return;
+    navigating = true;
+    choicesOpen = false;
+    refreshQuest(); renderPanels();
+    queue.enqueue([`Let's explore ${navigationCategory === "uiux" ? "UI/UX Design" : "Industrial Design"}. Follow the hint to the workstation, then open the portfolio when you're ready.`]);
+    document.getElementById("game").focus({ preventScroll: true });
+  });
+  document.getElementById("skip-selected-portfolio").addEventListener("keydown", event => {
+    if (event.code === "Space") { event.preventDefault(); if (!event.repeat) event.currentTarget.click(); }
+  });
   document.getElementById("choose-adventure").addEventListener("click", event => {
     choicesOpen = !choicesOpen;
     renderPanels();
@@ -245,10 +305,13 @@ export function setupStory(k, map, player, mapData) {
     if (event.detail > 0) document.getElementById("game").focus({ preventScroll: true });
   });
   document.getElementById("restart-story").addEventListener("click", () => {
+    if (!machine.getState().storyComplete || transition.isPending()) return;
     machine.dispatch({ type: "restart" });
     navigationCategory = null;
     navigating = true;
     choicesOpen = false;
+    document.getElementById("portfolio-status").textContent = "";
+    document.getElementById("accessible-feedback").textContent = "";
     pickupUntil = glowUntil = 0;
     football.pos = k.vec2(147, 129);
     football.opacity = 1;
@@ -268,7 +331,7 @@ export function setupStory(k, map, player, mapData) {
     const state = machine.getState();
     const distance = object => player.pos.dist(k.vec2(object.x * scaleFactor, object.y * scaleFactor));
     const available = objects.filter(object => (object.id === goal?.id || state.completed.includes(object.id) || (state.selectionReady && object.link) || (!object.label && object.id !== "intro")) && !(object.id === "football" && state.completed.includes("football")));
-    const candidate = available.map(object => ({ object, distance: distance(object) })).filter(item => item.distance < 24 * scaleFactor).sort((a, b) => a.distance - b.distance)[0];
+    const candidate = available.map(object => ({ object, distance: distance(object) })).filter(item => item.distance < (item.object.link ? 30 : 24) * scaleFactor).sort((a, b) => a.distance - b.distance)[0];
     let current = nearby && available.includes(nearby) && distance(nearby) < 28 * scaleFactor ? nearby : undefined;
     if (candidate && (!current || candidate.distance + 4 * scaleFactor < distance(current))) current = candidate.object;
     // Adjacent couch/TV zones must not hide the next objective behind a revisit prompt.
@@ -281,12 +344,6 @@ export function setupStory(k, map, player, mapData) {
       if (fraction === 0) { football.hidden = true; pickupUntil = 0; }
     }
     tvGlow.opacity = glowUntil > k.time() ? reducedMotion.matches ? 0.3 : 0.3 + Math.sin(k.time() * 18) * 0.15 : 0;
-    for (const { object, marker } of markers) {
-      marker.hidden = object.id !== goal?.id;
-      const targeted = object.id === goal?.id;
-      marker.color = k.Color.fromHex(targeted ? "#72d8ce" : "#ffce88");
-      marker.opacity = reducedMotion.matches ? 0.8 : k.time() < attentionUntil ? 1 : 0.7 + Math.sin(k.time() * 3) * 0.15;
-    }
     arrow.hidden = true;
     if (goal) {
       const local = player.pos.scale(1 / scaleFactor);
@@ -319,8 +376,15 @@ export function setupStory(k, map, player, mapData) {
         objectBounds = [{ left: a.x - 4, top: a.y - 4, right: b.x + 4, bottom: b.y + 4 }];
       }
     }
-    queue.position(k.toScreen(player.pos), viewport, [trackerBox, controls], objectBounds);
-    const exclusions = [trackerBox, controls];
+    const blocked = [trackerBox, controls];
+    if (!help.hidden) blocked.push(help.getBoundingClientRect());
+    if (!accessible.hidden) blocked.push(accessible.getBoundingClientRect());
+    if (goal) {
+      const pinPoint = k.toScreen(k.vec2(goal.x * scaleFactor, (goal.labelY ?? goal.y - 18) * scaleFactor));
+      objectBounds.push({ left: pinPoint.x - 18, right: pinPoint.x + 18, top: pinPoint.y - 44, bottom: pinPoint.y });
+    }
+    queue.position(k.toScreen(player.pos), viewport, blocked, objectBounds);
+    const exclusions = [...blocked];
     if (queue.isActive()) exclusions.push(document.getElementById("thought-bubble").getBoundingClientRect());
     if (!choices.hidden) exclusions.push(choices.getBoundingClientRect());
     if (document.getElementById("textbox-container").dataset.active === "true") exclusions.push(document.getElementById("textbox-container").getBoundingClientRect());
@@ -332,13 +396,28 @@ export function setupStory(k, map, player, mapData) {
       const playerScreen = k.toScreen(player.pos);
       const route = k.toScreen(arrow.pos.scale(scaleFactor));
       const angle = Math.atan2(route.y - playerScreen.y, route.x - playerScreen.x);
-      const x = Math.max(24, Math.min(innerWidth - 24, playerScreen.x + Math.cos(angle) * 90));
-      let y = Math.max(24, Math.min(innerHeight - 24, playerScreen.y + Math.sin(angle) * 90));
-      for (const box of exclusions) if (x + 18 > box.left && x - 18 < box.right && y + 18 > box.top && y - 18 < box.bottom) y = Math.min(innerHeight - 24, box.bottom + 24);
-      indicator.style.left = x + "px"; indicator.style.top = y + "px"; indicator.style.setProperty("--direction", angle + "rad");
+      const position = placeEdgeArrow(angle, viewport, exclusions);
+      indicator.hidden = !position;
+      if (position) {
+        indicator.style.left = position.x + "px"; indicator.style.top = position.y + "px";
+        indicator.style.setProperty("--direction", angle + "rad");
+      }
+    }
+    const pin = document.getElementById("quest-pin");
+    pin.hidden = !goal || !visible || !accessible.hidden || !help.hidden;
+    if (!pin.hidden) {
+      const point = k.toScreen(k.vec2(goal.x * scaleFactor, (goal.labelY ?? goal.y - 18) * scaleFactor));
+      const top = point.y - 40;
+      const box = { left: point.x - 16, right: point.x + 16, top, bottom: top + 36 };
+      pin.hidden = top < 8 || exclusions.some(b => box.left < b.right && box.right > b.left && box.top < b.bottom && box.bottom > b.top);
+      pin.style.left = point.x + "px"; pin.style.top = top + "px";
+      if (!pin.hidden) exclusions.push(box);
+      pin.dataset.object = goal.id;
     }
     updateLabels({
       activeId: accessible.hidden && nearby?.id === goal?.id ? goal?.id : undefined,
+      visibleIds: machine.getState().selectionReady ? ["uiux", "industrial"] : [],
+      selectedId: machine.getState().selectionReady ? navigationCategory : undefined,
       toScreen: (x, y) => k.toScreen(k.vec2(x * scaleFactor, y * scaleFactor)),
       viewport,
       exclusions,

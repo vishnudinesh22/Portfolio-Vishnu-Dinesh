@@ -8,18 +8,36 @@ export function createFloatingLabels(container, objects) {
     element.textContent = object.label;
     element.dataset.object = object.id;
     element.dataset.active = "false";
+    element.dataset.workstation = String(Boolean(object.link));
+    element.dataset.revealed = "false";
     container.append(element);
     return { object, element };
   });
-  return function update({ activeId, toScreen, viewport, exclusions }) {
+  return function update({ activeId, visibleIds = [], selectedId, toScreen, viewport, exclusions }) {
+    const occupied = [...exclusions];
     for (const { object, element } of labels) {
-      const active = object.id === activeId;
+      const active = object.id === activeId || visibleIds.includes(object.id);
+      element.dataset.selected = String(Boolean(object.link) && object.id === selectedId);
       if (element.dataset.active !== String(active)) element.dataset.active = String(active);
-      if (!active) continue;
-      const point = toScreen(object.labelX ?? object.x, object.labelY ?? object.y - 18);
+      if (!active) { element.dataset.revealed = "false"; continue; }
+      // The laptop sits against the upper wall; place its name above the wall
+      // rather than covering the original wall artwork.
+      const point = toScreen(object.labelX ?? object.x, object.id === "uiux" ? 62 : object.labelY ?? object.y - 18);
+      const objectPoint = toScreen(object.x, object.y);
+      if (object.link && (objectPoint.x < 0 || objectPoint.x > viewport.width || objectPoint.y < 0 || objectPoint.y > viewport.height)) {
+        element.style.visibility = "hidden";
+        continue;
+      }
       const width = element.offsetWidth;
       const height = element.offsetHeight;
-      const positions = [
+      const positions = object.link ? [
+        { x: point.x - width / 2, y: point.y - height },
+        { x: point.x + 25, y: point.y - height },
+        { x: point.x - width - 25, y: point.y - height },
+        { x: point.x - width / 2, y: point.y - height - 36 },
+        ...occupied.filter(box => box.top < point.y && box.bottom > point.y - height - 36 && box.left < point.x + width / 2 && box.right > point.x - width / 2)
+          .map(box => ({ x: point.x - width / 2, y: box.top - height - 8 })),
+      ] : [
         { x: point.x - width / 2, y: point.y - height },
         { x: point.x + 25, y: point.y },
         { x: point.x - width - 25, y: point.y },
@@ -30,12 +48,14 @@ export function createFloatingLabels(container, objects) {
         const left = Math.max(8, Math.min(viewport.width - width - 8, candidate.x));
         const top = Math.max(8, Math.min(viewport.height - height - 8, candidate.y));
         const rect = { left, right: left + width, top, bottom: top + height };
-        if (!exclusions.some(box => overlaps(rect, box))) { position = { left, top }; break; }
+        if (!occupied.some(box => overlaps(rect, box))) { position = { left, top }; break; }
       }
       element.style.visibility = position ? "visible" : "hidden";
       if (position) {
         element.style.left = position.left + "px";
         element.style.top = position.top + "px";
+        occupied.push({ left: position.left, right: position.left + width, top: position.top, bottom: position.top + height });
+        if (object.link) element.dataset.revealed = "true";
       }
     }
   };

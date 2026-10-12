@@ -10,10 +10,11 @@
 </head>
 <body>
   <div id="app">
-    <canvas id="game" aria-label="A Day in Vishnu's World. Arrow keys or hold click or touch to move. Press E or tap a nearby prompt to interact. Use Skip to Portfolio for an accessible alternative." tabindex="0"></canvas>
+    <canvas id="game" aria-label="A Day in Vishnu's World. Arrow keys or hold click or touch to move. Press Space to interact or advance a thought, or tap a nearby action. Use View My Work for an accessible alternative or Help for controls." tabindex="0"></canvas>
     <nav id="global-controls" class="global-controls" aria-label="Game controls">
       <button id="sound-toggle" aria-pressed="true">Sound on</button>
-      <button id="quick-access" aria-expanded="false" aria-controls="accessible-view">Skip to Portfolio</button>
+      <button id="quick-access" aria-expanded="false" aria-controls="accessible-view">View My Work</button>
+      <button id="help-toggle" aria-expanded="false" aria-controls="help-panel">Help</button>
     </nav>
     <aside id="quest-tracker" class="quest-tracker" aria-label="Quest tracker">
       <header><strong id="identity">A Day in Vishnu's World</strong><button id="collapse-quest" aria-expanded="true" aria-controls="quest-body" aria-label="Collapse quest tracker">−</button></header>
@@ -27,28 +28,42 @@
         <details id="quest-menu"><summary>Story menu</summary><p id="completed-objectives"></p><span id="inventory" class="inventory" hidden>Football packed</span>
         <button id="choose-adventure" class="text-button" hidden>Choose / switch adventure</button>
         <details id="recent-dialogue"><summary>Recent thoughts</summary><ol id="recent-thoughts"></ol></details>
-        <button id="restart-story" class="text-button">Restart Story</button>
-        <aside id="control-guide" class="control-guide" aria-label="Movement guide"><div><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> to walk</div><p>Or hold click / touch. <kbd>E</kbd> or tap a nearby prompt to interact.</p></aside></details>
+        <button id="restart-story" class="text-button" hidden>Restart Game</button>
+        <aside id="control-guide" class="control-guide" aria-label="Movement guide"><div><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> to walk · WASD also works</div><p>Or hold click / touch. <kbd>SPACE</kbd> or tap a nearby prompt to interact.</p></aside></details>
       </div>
     </aside>
-    <div id="thought-bubble" class="thought-bubble" data-active="false" aria-hidden="true" role="status" aria-live="polite"><p></p></div>
+    <section id="help-panel" class="help-panel" hidden aria-labelledby="help-title">
+      <header><h2 id="help-title">Explore Vishnu’s world</h2><button id="dismiss-help" aria-label="Dismiss control guide">×</button></header>
+      <p><kbd>← ↑ ↓ →</kbd> or WASD: walk, or hold click / touch.</p>
+      <p><kbd>SPACE</kbd> Interact, or tap the nearby action.</p>
+      <p><strong>View My Work</strong> opens both portfolios anytime.</p>
+      <p><strong>Sound on / off</strong> controls audio. <kbd>SPACE</kbd> advances a thought.</p>
+      <button id="start-exploring">Start Exploring</button>
+    </section>
+    <div id="thought-bubble" class="thought-bubble" data-active="false" aria-hidden="true"><p role="status" aria-live="polite"></p><button id="advance-thought" aria-label="Dismiss this thought and show the next, if any">SPACE — NEXT THOUGHT</button></div>
+    <div id="quest-pin" hidden aria-hidden="true"><svg viewBox="0 0 16 20" shape-rendering="crispEdges"><path d="M4 1H12V3H14V13H12V15H10V17H9V19H7V17H6V15H4V13H2V3H4Z" fill="#ffce88" stroke="#311047" stroke-width="2"/><path d="M6 5H10V9H6Z" fill="#311047"/></svg></div>
     <div id="direction-indicator" hidden aria-hidden="true">›</div>
     <div id="world-labels" aria-hidden="true"></div>
     <div id="time-transition" class="time-transition" data-active="false" aria-label="Evening transition">4 PM <span>→</span> 6 PM</div>
     <section id="textbox-container" class="info-panel" data-active="false" aria-hidden="true" inert aria-labelledby="dialogue-title">
       <div id="textbox"><h2 id="dialogue-title"></h2><p id="dialogue"></p><p id="story-note" class="story-note" hidden></p>
-        <button id="interact" hidden>Interact · E / tap</button><p id="interaction-note" class="interaction-note"></p>
-        <div class="portfolio-action"><a id="portfolio-link" target="_blank" rel="noopener noreferrer" hidden>Open portfolio ↗</a><span id="portfolio-hint">Click the link or press E · opens a new tab</span></div>
+        <button id="interact" hidden>SPACE — INTERACT / tap</button><p id="interaction-note" class="interaction-note"></p>
+        <p id="portfolio-status" role="status" aria-live="polite"></p><div class="portfolio-action"><a id="portfolio-link" target="_blank" rel="noopener noreferrer" hidden>Open portfolio ↗</a><span id="portfolio-hint">SPACE — OPEN PORTFOLIO · or tap the link · opens a new tab</span></div>
       </div>
     </section>
     <section id="adventure-choices" class="adventure-choices" hidden aria-labelledby="adventure-title">
       <header><h2 id="adventure-title">Choose your design adventure</h2><button id="close-choices" aria-label="Close choices and keep exploring">×</button></header>
-      <p>Pick a direction. Open the portfolio when you reach its workstation.</p>
+      <p>Select a category, then head to its workstation or open the portfolio directly.</p>
       <div class="choice-grid"><button data-category="uiux" aria-pressed="false"><strong>UI/UX DESIGN</strong><span>Head to the laptop</span></button><button data-category="industrial" aria-pressed="false"><strong>INDUSTRIAL DESIGN</strong><span>Head to the prototype table</span></button></div>
+      <div id="adventure-actions" hidden>
+        <p id="selected-adventure" aria-live="polite"></p>
+        <div class="adventure-action-grid"><button id="head-workstation">Head to Workstation</button><a id="skip-selected-portfolio" target="_blank" rel="noopener noreferrer">Skip to Portfolio ↗</a></div>
+        <small>Skipping opens your work directly and leaves Quest 6 unfinished.</small>
+      </div>
     </section>
     <section id="accessible-view" class="accessible-view" hidden aria-labelledby="accessible-title">
       <h1 id="accessible-title">My design world</h1><p>Open either portfolio now. Your story progress stays right where you left it.</p>
-      <h2>Explore my work</h2><div id="accessible-links"></div>
+      <h2>Explore my work</h2><p id="accessible-feedback" role="status"></p><div id="accessible-links"></div>
       <details><summary>Read my story without game controls</summary><div id="accessible-story"></div></details>
       <button id="return-game">Return to the story</button>
     </section>

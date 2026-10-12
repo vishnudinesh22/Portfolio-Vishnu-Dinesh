@@ -42,6 +42,15 @@ test("thoughts stay readable, play in order, avoid duplicate overlap, and cancel
     queue.position({ x: 195, y: 522 }, { width: 390, height: 844 }, [], [{ left: 143, right: 248, top: 420, bottom: 500 }]);
     assert.equal(element.style.top, "260px", "Bubble leaves the nearby prop visible");
     queue.clear();
+    let reactions = 0;
+    queue.enqueue([{ text: "Voluntary dismissal", onEnd: () => reactions++ }, "Next reaction"]);
+    queue.advance();
+    queue.advance();
+    assert.equal(reactions, 1, "Repeated dismissal cannot repeat a quest transition");
+    assert.equal(timers.size, 1);
+    tick();
+    assert.equal(paragraph.textContent, "Next reaction");
+    queue.clear();
     assert.equal(timers.size, 0);
     assert.equal(queue.isActive(), false);
     assert.equal(history.items.length, 0);

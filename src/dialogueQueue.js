@@ -4,7 +4,18 @@ export function createDialogueQueue(element, historyList) {
   const recent = [];
   let current;
   let timer;
+  let finishing = false;
+  function advance() {
+    if (!current || finishing) return;
+    clearTimeout(timer);
+    finishing = true;
+    current.onEnd?.();
+    element.dataset.active = "false";
+    element.setAttribute("aria-hidden", "true");
+    timer = setTimeout(next, 180);
+  }
   function next() {
+    finishing = false;
     current = waiting.shift();
     if (!current) {
       element.dataset.active = "false";
@@ -23,12 +34,7 @@ export function createDialogueQueue(element, historyList) {
     }));
     current.onStart?.();
     const milliseconds = current.duration ?? Math.min(7200, Math.max(3400, 1100 + current.text.split(/\s+/).length * 310));
-    timer = setTimeout(() => {
-      current?.onEnd?.();
-      element.dataset.active = "false";
-      element.setAttribute("aria-hidden", "true");
-      timer = setTimeout(next, 180);
-    }, milliseconds);
+    timer = setTimeout(advance, milliseconds);
   }
   function enqueue(messages) {
     for (const message of messages) {
@@ -42,6 +48,7 @@ export function createDialogueQueue(element, historyList) {
     clearTimeout(timer);
     waiting.length = 0;
     current = undefined;
+    finishing = false;
     recent.length = 0;
     historyList.replaceChildren();
     element.dataset.active = "false";
@@ -75,5 +82,5 @@ export function createDialogueQueue(element, historyList) {
     element.style.top = top + "px";
     element.style.setProperty("--tail-x", Math.max(16, Math.min(width - 16, point.x - left)) + "px");
   }
-  return { enqueue, clear, position, isActive: () => element.dataset.active === "true", isBusy: () => Boolean(current || waiting.length) };
+  return { enqueue, clear, advance, position, isActive: () => element.dataset.active === "true", isBusy: () => Boolean(current || waiting.length) };
 }
