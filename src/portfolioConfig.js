@@ -8,7 +8,8 @@ export const portfolioConfig = {
   footballDialogue: "When I'm not designing, I enjoy playing football. It's one of my favourite ways to switch off.",
   cyclingDialogue: "Cycling is another thing I enjoy. Sometimes the best ideas come when I'm away from my screen.",
   uiuxPortfolioUrl: "https://example.com/uiux",
-  industrialDesignPortfolioUrl: "https://www.behance.net/gallery/250435717/Industrial-Design-Portfolio-2026/modules/1451888849",
+  industrialDesignPortfolioUrl: "  https://industrial-design-portfolio-ruby.vercel.app/",
+
   experienceTitle: "A Day in Vishnu's World",
   objectNames: { football: "FOOTBALL", cycling: "ROCKY THE CYCLE", couch: "BLENDY THE COUCH", tv: "PORTAL THE TV", degree: "DESIGN CERTIFICATE", uiux: "UI/UX DESIGN", industrial: "INDUSTRIAL DESIGN" },
   story: {
