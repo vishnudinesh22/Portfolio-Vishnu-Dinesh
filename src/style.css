@@ -192,3 +192,9 @@ body[data-cinematic="true"] #world-labels, body[data-cinematic="true"] #quest-pi
 #loading[data-fallback] { pointer-events: auto; background: #311047; z-index: 20; }
 #loading .portfolio-action { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; }
 #loading small { font-family: Nunito, system-ui, sans-serif; font-size: 11px; letter-spacing: 0; opacity: .7; max-width: 320px; }
+/* Loading icon: the game's own side-walk frames (row 25, columns 0-3 of the 16px sprite sheet) at 4x. */
+#loading .runner { width: 64px; height: 64px; background: url('/spritesheet.png') 0 -1600px / 2496px 1984px no-repeat; image-rendering: pixelated; animation: runner-walk .5s steps(4) infinite, runner-bob .25s ease-in-out infinite alternate; }
+#loading[data-fallback] .runner { display: none; }
+@keyframes runner-walk { to { background-position-x: -256px; } }
+@keyframes runner-bob { to { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { #loading .runner { animation: none; } }
