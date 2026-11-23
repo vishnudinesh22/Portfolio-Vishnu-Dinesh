@@ -7,8 +7,10 @@ export const portfolioConfig = {
   couchDialogue: "My couch is probably my favourite place. Most days, you'll find me working on something while watching a series in the background.",
   footballDialogue: "When I'm not designing, I enjoy playing football. It's one of my favourite ways to switch off.",
   cyclingDialogue: "Cycling is another thing I enjoy. Sometimes the best ideas come when I'm away from my screen.",
+  uiuxPortfolioName: "UI/UX Portfolio",
+  industrialDesignPortfolioName: "Industrial Design Portfolio",
   uiuxPortfolioUrl: "https://example.com/uiux",
-  industrialDesignPortfolioUrl: "  https://industrial-design-portfolio-ruby.vercel.app/",
+  industrialDesignPortfolioUrl: "https://industrial-design-portfolio-ruby.vercel.app/",
 
   experienceTitle: "A Day in Vishnu's World",
   objectNames: { football: "FOOTBALL", cycling: "ROCKY THE CYCLE", couch: "BLENDY THE COUCH", tv: "PORTAL THE TV", degree: "DESIGN CERTIFICATE", uiux: "UI/UX DESIGN", industrial: "INDUSTRIAL DESIGN" },

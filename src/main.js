@@ -35,6 +35,7 @@ k.scene("main", async () => {
   const map = k.add([k.sprite("map"), k.pos(0), k.scale(scaleFactor)]);
   applyFloorPalette(k, map, mapData);
   addSofa(k,map);
+  document.getElementById("loading")?.remove();
 
   const player = k.make([
     k.sprite("spritesheet", { anim: "idle-down" }),

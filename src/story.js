@@ -182,8 +182,7 @@ export function setupStory(k, map, player, mapData) {
     choices.hidden = !showChoices;
     const stop = accessible.hidden && !showChoices && !state.pending && !autoWalk && completion.hidden ? nearby : undefined;
     showProximityInfo(stop);
-    if(stop?.link&&!state.storyComplete){document.getElementById("portfolio-link").hidden=true;document.getElementById("portfolio-hint").textContent="Choose a design category to walk to its workstation.";}
-    else document.getElementById("portfolio-hint").textContent="Click the portfolio link to open it in a new tab.";
+    document.getElementById("portfolio-hint").textContent="Click the portfolio link to open it in a new tab.";
     actionButton.hidden = true;
     const instruction = document.getElementById("interaction-note");
     instruction.textContent = "";
@@ -209,7 +208,7 @@ export function setupStory(k, map, player, mapData) {
 
   function interact() {
     if (!nearby || !accessible.hidden || !choices.hidden || player.isInDialogue || autoWalk) return;
-    if (nearby.link) { if(machine.getState().storyComplete)showCompletion(nearby.id);else startWalk(nearby.id);return; }
+    if (nearby.link) { if(machine.getState().storyComplete)showCompletion(nearby.id);else if(machine.getState().selectionReady)startWalk(nearby.id);return; }
     if (queue.isBusy() || machine.getState().pending) return;
     const result = machine.dispatch({ type: "interact", id: nearby.id });
     if (!result.changed) {
@@ -324,7 +323,7 @@ export function setupStory(k, map, player, mapData) {
     document.getElementById("collapse-quest").textContent = collapsed ? "+" : "−";
     document.getElementById("collapse-quest").setAttribute("aria-label", collapsed ? "Expand quest tracker" : "Collapse quest tracker");
   }
-  try { collapsed = storage?.getItem("a-day-tracker-collapsed") === "yes"; } catch { /* Optional preference. */ }
+  try { const saved = storage?.getItem("a-day-tracker-collapsed"); collapsed = saved ? saved === "yes" : window.matchMedia("(max-width: 600px)").matches; } catch { /* Optional preference. */ }
   setCollapsed();
   document.getElementById("collapse-quest").addEventListener("click", event => {
     collapsed = !collapsed;
@@ -411,7 +410,7 @@ export function setupStory(k, map, player, mapData) {
     if (guide.dataset.dismissed !== "true" && player.pos.dist(startPosition) > 40) guide.dataset.dismissed = "true";
     const state = machine.getState();
     const distance = object => player.pos.dist(k.vec2(object.x * scaleFactor, object.y * scaleFactor));
-    const available = objects.filter(object => (object.id === goal?.id || state.completed.includes(object.id) || (state.selectionReady && object.link) || (!object.label && object.id !== "intro")) && !(object.id === "football" && state.completed.includes("football")));
+    const available = objects.filter(object => (object.id === goal?.id || state.completed.includes(object.id) || object.link || (!object.label && object.id !== "intro")) && !(object.id === "football" && state.completed.includes("football")));
     const candidate = available.map(object => ({ object, distance: distance(object) })).filter(item => item.distance < (item.object.link ? 30 : 26) * scaleFactor).sort((a, b) => a.distance - b.distance)[0];
     let current = nearby && available.includes(nearby) && distance(nearby) < 28 * scaleFactor ? nearby : undefined;
     if (candidate && (!current || candidate.distance + 4 * scaleFactor < distance(current))) current = candidate.object;
@@ -500,7 +499,7 @@ export function setupStory(k, map, player, mapData) {
     }
     updateLabels({
       activeId: goal?.id,
-      visibleIds: machine.getState().selectionReady ? ["uiux", "industrial"] : [],
+      visibleIds: ["uiux", "industrial"],
       selectedId: machine.getState().selectionReady ? navigationCategory : undefined,
       toScreen: (x, y) => k.toScreen(k.vec2(x * scaleFactor, y * scaleFactor)),
       viewport,

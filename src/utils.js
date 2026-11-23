@@ -14,7 +14,7 @@ export function showProximityInfo(stop) {
   destination.hidden = !stop.link;
   if (stop.link) {
     destination.href = stop.link;
-    destination.textContent = stop.id === "uiux" ? "OPEN UI/UX CASE STUDIES" : "OPEN INDUSTRIAL DESIGN PROJECTS";
+    destination.textContent = `OPEN ${stop.linkName.toUpperCase()} ↗`;
   } else destination.removeAttribute("href");
 }
 export function setCamScale(k) {
