@@ -11,7 +11,31 @@
 </head>
 <body>
   <div id="app">
-    <p id="loading" role="status">Loading…</p>
+    <div id="loading" role="status"><p id="loading-text">Loading…</p></div>
+    <script>
+      // If the game cannot start (slow phone, no WebGL, script error), still let visitors reach the work.
+      (function () {
+        function showFallback(reason) {
+          var box = document.getElementById("loading");
+          if (!box || box.dataset.fallback) return;
+          box.dataset.fallback = "true";
+          var text = document.getElementById("loading-text");
+          text.textContent = "The game is taking a while to load on this device.";
+          var actions = document.createElement("div");
+          actions.className = "portfolio-action";
+          [["UI/UX Portfolio", "https://ui-ux-portfolio-vishnu.vercel.app/"], ["Industrial Design Portfolio", "https://industrial-design-portfolio-ruby.vercel.app/"]].forEach(function (item) {
+            var a = document.createElement("a");
+            a.href = item[1]; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = item[0] + " ↗";
+            actions.appendChild(a);
+          });
+          box.appendChild(actions);
+          if (reason) { var small = document.createElement("small"); small.textContent = "Details: " + String(reason).slice(0, 160); box.appendChild(small); }
+        }
+        setTimeout(function () { showFallback(); }, 12000);
+        window.addEventListener("error", function (e) { showFallback(e && e.message); });
+        window.addEventListener("unhandledrejection", function (e) { showFallback(e && e.reason && (e.reason.message || e.reason)); });
+      })();
+    </script>
     <canvas id="game" aria-label="A Day in Vishnu's World. Arrow keys or hold click or touch to move. Press Space to interact or advance a thought, or tap a nearby action. Use View My Work for an accessible alternative or Help for controls." tabindex="0"></canvas>
     <nav id="global-controls" class="global-controls" aria-label="Game controls">
       <button id="sound-toggle" aria-pressed="true">Sound on</button>
