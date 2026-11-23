@@ -31,7 +31,7 @@
           box.appendChild(actions);
           if (reason) { var small = document.createElement("small"); small.textContent = "Details: " + String(reason).slice(0, 160); box.appendChild(small); }
         }
-        setTimeout(function () { showFallback(); }, 12000);
+        setTimeout(function () { showFallback(); }, 6000);
         window.addEventListener("error", function (e) { showFallback(e && e.message); });
         window.addEventListener("unhandledrejection", function (e) { showFallback(e && e.reason && (e.reason.message || e.reason)); });
       })();
