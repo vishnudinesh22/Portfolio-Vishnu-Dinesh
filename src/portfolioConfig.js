@@ -9,7 +9,7 @@ export const portfolioConfig = {
   cyclingDialogue: "Cycling is another thing I enjoy. Sometimes the best ideas come when I'm away from my screen.",
   uiuxPortfolioName: "UI/UX Portfolio",
   industrialDesignPortfolioName: "Industrial Design Portfolio",
-  uiuxPortfolioUrl: "https://example.com/uiux",
+  uiuxPortfolioUrl: "https://ui-ux-portfolio-vishnu.vercel.app/",
   industrialDesignPortfolioUrl: "https://industrial-design-portfolio-ruby.vercel.app/",
 
   experienceTitle: "A Day in Vishnu's World",
